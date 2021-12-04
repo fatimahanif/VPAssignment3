@@ -22,6 +22,8 @@ namespace Assignment3
     {
         public List<string> files = new List<string>();
         BackgroundWorker backgroundWorker = new BackgroundWorker();
+        string currentPath = "";
+        bool? imagecheck, audiocheck, videocheck, pdfcheck;
         public MainWindow()
         {
             InitializeComponent();
@@ -41,61 +43,90 @@ namespace Assignment3
         // Background Worker Methods
         private void backgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            throw new NotImplementedException();
+            MessageBox.Show("completed");
         }
 
         private void backgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
-            throw new NotImplementedException();
+            //files_listbox.Items.Add(files[e.ProgressPercentage]);
+            // System.Threading.Thread.Sleep(100);
+            //files_listbox.Items[0] = "hello";
+            files_listbox.Items.Refresh();
         }
 
         private void backgroundWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            throw new NotImplementedException();
+            searchFiles(currentPath, e);
         }
         #endregion
         private void start_button_click(object sender, RoutedEventArgs e)
         {
-            searchFiles(path_textBox.Text);
+            currentPath = path_textBox.Text;
+            imagecheck = image_checkbox.IsChecked;
+            audiocheck = audio_checkbox.IsChecked;
+            videocheck = video_checkbox.IsChecked;
+            pdfcheck = pdf_checkbox.IsChecked;
+            if (!backgroundWorker.IsBusy)
+            {
+                backgroundWorker.RunWorkerAsync();
+                start_button.Content = "Stop";
+            }
+            else 
+            {
+                backgroundWorker.CancelAsync();
+                start_button.Content = "Start";                                                                                                                                                 
+            }
+           // searchFiles(path_textBox.Text);
         }
 
         #region browsing directory and subdirectories
-        private void searchFiles(string path)
+        private void searchFiles(string path, DoWorkEventArgs e)
         {
+            if (backgroundWorker.CancellationPending) 
+            {
+                e.Cancel = true;
+            }
             //System.Threading.Thread.Sleep(100);
 
             //browsing subdirectories
             foreach (string directory in Directory.GetDirectories(path))
             {
-                searchFiles(directory);
-            }
+              //  System.Threading.Thread.Sleep(100);
 
+                searchFiles(directory, e);
+
+            }
+           // System.Threading.Thread.Sleep(100);
             //browsing directory
             foreach (string file in Directory.GetFiles(path))
             {
                 string extension = GetExtension(getFileOrFolder(file));
-                if (image_checkbox.IsChecked == true && (extension.Equals("jpg") || extension.Equals("png") || extension.Equals("gif")))
+                if (imagecheck == true && (extension.Equals("jpg") || extension.Equals("png") || extension.Equals("gif")))
                 {
                     files.Add($"{getFileOrFolder(file)}: {file}");
                 }
-                if (pdf_checkbox.IsChecked == true && extension.Equals("pdf"))
+                if (pdfcheck == true && extension.Equals("txt"))
+                {
+                    files.Add($"{getFileOrFolder(file)}: {file}");
+                   
+
+                }
+                if (audiocheck == true && (extension.Equals("mp3") || extension.Equals("aac")))
                 {
                     files.Add($"{getFileOrFolder(file)}: {file}");
                 }
-                if (audio_checkbox.IsChecked == true && (extension.Equals("mp3") || extension.Equals("aac")))
-                {
-                    files.Add($"{getFileOrFolder(file)}: {file}");
-                }
-                if (video_checkbox.IsChecked == true && extension.Equals("mp4"))
+                if (videocheck== true && extension.Equals("mp4"))
                 {
                     files.Add($"{getFileOrFolder(file)}: {file}");
                 }
                 Console.WriteLine(Path.GetExtension(path));
-                files_listbox.Items.Refresh();
+                backgroundWorker.ReportProgress(0);
+                //files_listbox.Items.Refresh();
                 //System.Threading.Thread.Sleep(100);
                 //files_listbox.Items.Add(file);
-
             }
+
+           
             return;
         }
         #endregion
